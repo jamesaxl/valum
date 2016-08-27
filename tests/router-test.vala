@@ -928,6 +928,38 @@ public static void test_router_next () {
 	assert (418 == response.status);
 }
 
+public void test_router_next_in_thread () {
+	var router = new Router ();
+	Thread<bool>? thread = null;
+
+	router.get ("/", (req, res, next) => {
+		thread = new Thread<bool> (null, () => {
+			try {
+				return next ();
+			} catch (Error err) {
+				assert_not_reached ();
+			}
+		});
+		return true;
+	});
+
+	router.get ("/", (req, res) => {
+		return true;
+	});
+
+	var request = new Request.with_uri (new Soup.URI ("http://localhost/"));
+	var response = new Response.with_status (request, Soup.Status.NOT_FOUND);
+
+	try {
+		assert (router.handle (request, response));
+	} catch (Error err) {
+		assert_not_reached ();
+	}
+
+	assert (thread != null);
+	assert (thread.join ());
+}
+
 public static void test_router_next_not_found () {
 	var router = new Router ();
 

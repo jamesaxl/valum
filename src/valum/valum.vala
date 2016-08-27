@@ -66,7 +66,7 @@ namespace Valum {
 	 */
 	public delegate bool HandlerCallback (Request req,
 	                                      Response res,
-	                                      NextCallback next,
+	                                      owned NextCallback next,
 	                                      Context context) throws Informational,
 	                                                              Success,
 	                                                              Redirection,
@@ -82,7 +82,7 @@ namespace Valum {
 	 */
 	public delegate bool ForwardCallback<T> (Request      req,
 	                                         Response     res,
-	                                         NextCallback next,
+	                                         owned NextCallback next,
 	                                         Context      context,
 	                                         T            @value) throws Error;
 

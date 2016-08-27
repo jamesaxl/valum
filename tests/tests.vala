@@ -70,6 +70,7 @@ public int main (string[] args) {
 	Test.add_func ("/router/subrouting", test_router_subrouting);
 
 	Test.add_func ("/router/next", test_router_next);
+	Test.add_func ("/router/next/in_thread", test_router_next_in_thread);
 	Test.add_func ("/router/next/not_found", test_router_next_not_found);
 	Test.add_func ("/router/next/propagate_error", test_router_next_propagate_error);
 	Test.add_func ("/router/next/propagate_state", test_router_next_propagate_state);
