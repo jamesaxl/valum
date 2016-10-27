@@ -40,8 +40,6 @@ public class VSGI.Application : GLib.Application {
 		         ApplicationFlags.SEND_ENVIRONMENT     |
 		         ApplicationFlags.NON_UNIQUE;
 		const OptionEntry[] entries = {
-			// general options
-			{"forks",           0,   0, OptionArg.INT,            null, "Number of forks to create",            "0"},
 			// address
 			{"address",         'a', 0, OptionArg.STRING_ARRAY,   null, "Listen on each addresses",             "[]"},
 			// port
@@ -49,8 +47,10 @@ public class VSGI.Application : GLib.Application {
 			{"any",             'A', 0, OptionArg.NONE,           null, "Listen on any address instead of only from the loopback interface"},
 			{"ipv4-only",       '4', 0, OptionArg.NONE,           null, "Listen only to IPv4 interfaces"},
 			{"ipv6-only",       '6', 0, OptionArg.NONE,           null, "Listen only to IPv6 interfaces"},
+#if GIO_UNIX
 			// socket
 			{"socket",          's', 0, OptionArg.FILENAME_ARRAY, null, "Listen on each UNIX socket paths",     "[]"},
+#endif
 			// file descriptor
 			{"file-descriptor", 'f', 0, OptionArg.STRING_ARRAY,   null, "Listen on each file descriptors",      "[]"},
 			{null}
@@ -91,7 +91,9 @@ public class VSGI.Application : GLib.Application {
 			var any       = options.lookup_value ("any",             VariantType.BOOLEAN);
 			var ipv4_only = options.lookup_value ("ipv4-only",       VariantType.BOOLEAN);
 			var ipv6_only = options.lookup_value ("ipv6-only",       VariantType.BOOLEAN);
+#if GIO_UNIX
 			var sockets   = options.lookup_value ("socket",          VariantType.BYTESTRING_ARRAY);
+#endif
 			var fds       = options.lookup_value ("file-descriptor", VariantType.STRING_ARRAY);
 
 			if (addresses != null) {
@@ -144,12 +146,14 @@ public class VSGI.Application : GLib.Application {
 				}
 			}
 
+#if GIO_UNIX
 			// socket path
 			if (sockets != null) {
 				foreach (var socket in sockets.get_bytestring_array ()) {
 					server.listen (new UnixSocketAddress (socket));
 				}
 			}
+#endif
 
 			// file descriptor
 			if (fds != null) {
@@ -164,38 +168,18 @@ public class VSGI.Application : GLib.Application {
 			}
 
 			// default listening interface
-			if (addresses == null && ports == null && sockets == null && fds == null) {
+			if (addresses == null &&
+			    ports     == null &&
+#if GIO_UNIX
+			    sockets   == null &&
+#endif
+			    fds       == null) {
 				server.listen ();
 			}
 
 		} catch (Error err) {
 			critical ("%s (%s, %d)", err.message, err.domain.to_string (), err.code);
 			return 1;
-		}
-
-		if (options.lookup_value ("forks", VariantType.INT32) != null) {
-			var forks = options.lookup_value ("forks", VariantType.INT32).get_int32 ();
-			try {
-				for (var i = 0; i < forks; i++) {
-					var pid = server.fork ();
-
-					// worker
-					if (pid == 0) {
-						break;
-					}
-
-					// parent
-					else {
-						// monitor child process
-						ChildWatch.add (pid, (pid, status) => {
-							warning ("Worker %d exited with status '%d'.", pid, status);
-						});
-					}
-				}
-			} catch (Error err) {
-				critical ("%s (%s, %d)", err.message, err.domain.to_string (), err.code);
-				return 1;
-			}
 		}
 
 		foreach (var uri in server.uris) {
@@ -205,12 +189,14 @@ public class VSGI.Application : GLib.Application {
 		// keep the process (and workers) alive
 		hold ();
 
+#if GIO_UNIX
 		// release on 'SIGTERM'
 		Unix.signal_add (ProcessSignal.TERM, () => {
 			release ();
 			server.stop ();
 			return false;
 		}, Priority.LOW);
+#endif
 
 		return 0;
 	}

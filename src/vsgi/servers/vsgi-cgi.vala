@@ -39,8 +39,18 @@ namespace VSGI.CGI {
 
 		public override OutputStream output_stream { get { return this._output_stream; } }
 
-		public Connection (Server server, InputStream input_stream, OutputStream output_stream) {
+		public Connection (Server server) {
 			Object (server: server);
+#if GIO_UNIX
+			_input_stream  = new UnixInputStream (stdin.fileno (), true);
+			_output_stream = new UnixOutputStream (stdout.fileno (), true);
+#elif GIO_WINDOWS
+			_input_stream  = new Win32InputStream (stdin, true);
+			_output_stream = new Win32OutputStream (stdout, true);
+#else
+				// TODO: find an alternative
+#endif
+
 			this._input_stream  = input_stream;
 			this._output_stream = output_stream;
 		}
@@ -70,11 +80,7 @@ namespace VSGI.CGI {
 			}
 
 			Idle.add (() => {
-				var connection = new Connection (this,
-				                                 new UnixInputStream (stdin.fileno (), true),
-				                                 new UnixOutputStream (stdout.fileno (), true));
-
-				var req = new Request (connection, Environ.@get ());
+				var req = new Request (new Connection (this), Environ.@get ());
 				var res = new Response (req);
 
 				// handle a single request and quit
@@ -102,13 +108,6 @@ namespace VSGI.CGI {
 
 		public override void stop () {
 			// CGI handle a single connection
-		}
-
-		/**
-		 * Forking does not make sense for CGI.
-		 */
-		public override Pid fork () {
-			return 0;
 		}
 	}
 }

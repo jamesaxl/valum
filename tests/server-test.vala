@@ -36,15 +36,5 @@ public int main (string[] args) {
 		assert ("VSGIMockServer" == server.get_type ().name ());
 	});
 
-	Test.add_func ("/server/fork", () => {
-		var server = Server.@new ("mock");
-		Pid pid;
-		try {
-			pid = server.fork ();
-		} catch (Error err) {
-			assert_not_reached ();
-		}
-	});
-
 	return Test.run ();
 }

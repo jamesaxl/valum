@@ -22,7 +22,8 @@ endif
 glib = dependency('glib-2.0', version: '>=2.40')
 gobject = dependency('gobject-2.0', version: '>=2.40')
 gio = dependency('gio-2.0', version: '>=2.40')
-gio_unix = dependency('gio-unix-2.0', version: '>=2.40')
+gio_unix = dependency('gio-unix-2.0', version: '>=2.40', required: false)
+gio_windows = dependency('gio-windows-2.0', version: '>=2.40', required: false)
 gmodule = dependency('gmodule-2.0', version: '>=2.40')
 soup = dependency('libsoup-2.4', version: '>=2.44')
 
@@ -31,6 +32,14 @@ vala_defines = []
 # provide 'OutputStream.write_all_async'
 if gio.version().version_compare('>=2.44')
     vala_defines += '--define=GIO_2_44'
+endif
+
+if gio_unix.found()
+    vala_defines += '--define=GIO_UNIX'
+endif
+
+if gio_windows.found()
+    vala_defines += '--define=GIO_WINDOWS'
 endif
 
 # new 'Soup.Server' API

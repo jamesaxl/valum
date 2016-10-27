@@ -124,30 +124,6 @@ namespace VSGI {
 		public abstract void stop ();
 
 		/**
-		 * Fork the execution.
-		 *
-		 * This is typically called after {@link VSGI.Server.listen} such that
-		 * workers can share listening interfaces and descriptors.
-		 *
-		 * The default implementation wraps {@link Posix.fork} and check its
-		 * return value. To disable forking, simply override this and return
-		 * '0'.
-		 *
-		 * @throws GLib.SpawnError.FORK if the {@link Posix.fork} call fails
-		 *
-		 * @return the process pid if this is the parent process,
-		 *         otherwise '0'
-		 */
-		[Version (since = "0.3")]
-		public virtual Pid fork () throws Error {
-			var pid = Posix.fork ();
-			if (pid == -1) {
-				throw new SpawnError.FORK (strerror (errno));
-			}
-			return pid;
-		}
-
-		/**
 		 * Dispatch the request to the application callback.
 		 *
 		 * The application must call {@link Response.write_head} at some point.
