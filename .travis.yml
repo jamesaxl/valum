@@ -14,6 +14,8 @@ env:
     - VALAC=valac-0.28
     - VALAC=valac-0.30
     - VALAC=valac VALAFLAGS=--fatal-warnings
+    - VALAC=valac CROSS=mingw-w64-i686
+    - VALAC=valac CROSS=mingw-w64-x86-64
 
 before_install:
     - sudo add-apt-repository --yes ppa:vala-team
@@ -22,13 +24,14 @@ before_install:
       libglib2.0-dev libsoup2.4-dev libfcgi-dev python3-pip gcovr libgee-0.8-dev
       libctpl-dev libjson-glib-dev libmemcached-dev libmarkdown2-dev
       liblua5.2-dev
+      $(if [[ -n ${CROSS} ]]; then echo gcc-${CROSS} wine1.6; fi)
     - sudo pip3 install meson sphinx sphinx_rtd_theme PyYAML
     - wget https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-linux.zip
     - sudo unzip ninja-linux.zip -d /usr/local/bin
 
 before_script:
     - mkdir build
-    - meson.py -D b_coverage=true -D enable_docs=true -D enable_examples=true . build
+    - meson.py -D b_coverage=true -D enable_docs=true -D enable_examples=true $(if [[ -n ${CROSS}; then echo --cross-file=cross/${CROSS}.txt; fi]]) . build
     - ninja -C build -v
 
 script:
