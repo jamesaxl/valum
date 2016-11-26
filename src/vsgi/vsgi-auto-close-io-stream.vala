@@ -15,15 +15,35 @@
  * along with Valum.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * Connection available from {@link VSGI.Request} holding raw streams.
- */
-[Version (since = "0.3")]
-public abstract class VSGI.Connection : GLib.IOStream {
+using GLib;
 
-	/**
-	 * Server which initiated this connection.
-	 */
-	[Version (since = "0.3")]
-	public Server server { construct; get; }
+public class VSGI.AutoCloseIOStream : IOStream {
+
+	private InputStream  _input_stream;
+	private OutputStream _output_stream;
+
+	public override InputStream input_stream {
+		get {
+			return _input_stream;
+		}
+	}
+
+	public override OutputStream output_stream {
+		get {
+			return _output_stream;
+		}
+	}
+
+	public AutoCloseIOStream (InputStream input_stream, OutputStream output_stream) {
+		_input_stream  = input_stream;
+		_output_stream = output_stream;
+	}
+
+	public override void dispose () {
+		try {
+			close ();
+		} catch (IOError err) {
+			critical (err.message);
+		}
+	}
 }

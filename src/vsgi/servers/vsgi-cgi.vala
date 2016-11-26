@@ -30,22 +30,6 @@ public Type server_init (TypeModule type_module) {
  */
 namespace VSGI.CGI {
 
-	private class Connection : VSGI.Connection {
-
-		private InputStream _input_stream;
-		private OutputStream _output_stream;
-
-		public override InputStream input_stream { get { return this._input_stream; } }
-
-		public override OutputStream output_stream { get { return this._output_stream; } }
-
-		public Connection (Server server, InputStream input_stream, OutputStream output_stream) {
-			Object (server: server);
-			this._input_stream  = input_stream;
-			this._output_stream = output_stream;
-		}
-	}
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -69,11 +53,10 @@ namespace VSGI.CGI {
 				throw new IOError.NOT_SUPPORTED ("The CGI server only support listening from standard streams.");
 			}
 
-			var connection = new Connection (this,
-											 new UnixInputStream (stdin.fileno (), true),
-											 new UnixOutputStream (stdout.fileno (), true));
+			var connection = new AutoCloseIOStream (new UnixInputStream (stdin.fileno (), true),
+			                                        new UnixOutputStream (stdout.fileno (), true));
 
-			var req = new Request (connection, Environ.@get ());
+			var req = new Request.from_cgi_environment (connection, Environ.@get ());
 			var res = new Response (req);
 
 			// handle a single request and quit
